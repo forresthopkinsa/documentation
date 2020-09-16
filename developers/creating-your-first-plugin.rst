@@ -31,7 +31,7 @@ Dependency
 +-----------------+-------------------------+
 | **Artifact ID** | ``velocity-api``        |
 +-----------------+-------------------------+
-| **Version**     | ``1.0.0-SNAPSHOT``      |
+| **Version**     | ``1.0.9``               |
 +-----------------+-------------------------+
 
 Javadocs
@@ -68,7 +68,7 @@ Add the following to your ``build.gradle``:
     }
 
     dependencies {
-        compile 'com.velocitypowered:velocity-api:1.0.0-SNAPSHOT'
+        compile 'com.velocitypowered:velocity-api:1.0.9'
     }
 
 .. note::
@@ -79,8 +79,8 @@ Add the following to your ``build.gradle``:
     .. code-block:: groovy
 
         dependencies {
-            compile 'com.velocitypowered:velocity-api:1.0.0-SNAPSHOT'
-            annotationProcessor 'com.velocitypowered:velocity-api:1.0.0-SNAPSHOT'
+            compile 'com.velocitypowered:velocity-api:1.0.9'
+            annotationProcessor 'com.velocitypowered:velocity-api:1.0.9'
         }
 
 Setting up the dependency with Maven
@@ -192,3 +192,80 @@ Velocity automatically registers your plugin main class as a listener.
             // For instance, we could register an event:
             server.getEventManager().register(this, new PluginListener());
         }
+
+Alternatively: Kotlin
+^^^^^^^^^^^^^^^^^^^^^
+
+Kotlin is the second-most popular language capable of running on the JVM (behind Java).
+As such, it's a viable option for developing Velocity plugins; additionally, its more
+modern syntax makes it a very attractive choice.
+
+Here are some brief notes to assist in starting a Velocity plugin using Kotlin:
+
+Your build script will look a little different than the above, because of the additional
+dependency on the Kotlin stdlib and a specialized annotation processor that must be used
+in place of Gradle's default. Also, it will probably be written in Kotlin itself, rather
+than Groovy.
+
+Your ``build.gradle.kts`` should include the following:
+
+.. code-block:: kotlin
+
+    plugins {
+        kotlin("jvm") version "1.4.10"
+        kotlin("kapt") version "1.4.10"
+        id("com.github.johnrengelman.shadow") version "6.0.0"
+    }
+
+    repositories {
+        mavenCentral()
+        maven {
+            url = uri("https://repo.velocitypowered.com/snapshots/")
+        }
+    }
+
+    var velocityApi = "com.velocitypowered:velocity-api:1.0.9"
+
+    dependencies {
+        implementation(kotlin("stdlib"))
+        implementation(velocityApi)
+        kapt(velocityApi)
+    }
+    
+    tasks["build"].dependsOn("shadowJar")
+
+``kapt`` is the aforementioned Kotlin-specific annotation processor,
+and ``shadow`` enables building "fat jars", which Velocity requires.
+
+Then, your plugin class can look something like this:
+
+.. code-block:: kotlin
+
+    package com.example.velocityplugin
+
+    import com.google.inject.Inject
+    import com.velocitypowered.api.event.Subscribe
+    import com.velocitypowered.api.event.proxy.ProxyInitializeEvent
+    import com.velocitypowered.api.plugin.Plugin
+    import com.velocitypowered.api.proxy.ProxyServer
+    import org.slf4j.Logger
+
+    @Plugin(
+        id = "myfirstplugin",
+        name = "My First Kotlin Plugin",
+        version = "1.0-SNAPSHOT",
+        description = "I did it!",
+        authors = ["Me"]
+    )
+    class VelocityTest @Inject constructor(var server: ProxyServer, var logger: Logger) {
+
+        @Subscribe
+        fun onProxyInitialize(event: ProxyInitializeEvent) {
+            logger.info("On proxy initialize")
+            server.eventManager.register(this, PluginListener())
+        }
+
+    }
+
+If you're familiar with Java and interested in learning Kotlin,
+you can hit the ground running using the `Kotlin Koans <https://play.kotlinlang.org/koans/overview>`_ site.
